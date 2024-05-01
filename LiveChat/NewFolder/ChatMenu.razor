@@ -1,0 +1,23 @@
+﻿<div class="vertical-nav">
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="@NavLink1">@NavLinkText1</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="@NavLink2">@NavLinkText2</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="@NavLink3">@NavLinkText3</a>
+        </li>
+    </ul>
+</div>
+
+@code {
+    private string NavLink1 = "/page1";
+    private string NavLink2 = "/page2";
+    private string NavLink3 = "/page3";
+
+    private string NavLinkText1 = "Page 1";
+    private string NavLinkText2 = "Page 2";
+    private string NavLinkText3 = "Page 3";
+}

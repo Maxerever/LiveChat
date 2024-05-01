@@ -1,0 +1,130 @@
+﻿@page "/chat"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using LiveChat.Data
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@implements IAsyncDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Home</PageTitle>
+
+        <label id="inlineblock">
+            <label id="inlineblock">
+                <ul>
+                    <input @bind="receiver" />
+                </ul>
+                   <input @bind="messageInput" size="50" />
+                <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+
+                <hr>
+
+                <label id="inlineblock">
+                    @foreach (var message in messages)
+                    {
+                        <div id="message">@message</div>
+                    }
+                </label>
+            </label>
+            
+        </label>
+
+        <div class="page" id="inlineblock">
+            <div class="sidebar" id="inlineblock">
+                <input />
+            </div>
+            <article class="content px-4">
+
+                <input />
+            </article>
+        </div>
+
+
+
+
+
+
+
+        @code {
+            private bool expandSubNav;
+            private HubConnection? hubConnection;
+        private List<string> messages = new List<string>();
+        private string? userInput;
+        private string? receiver;
+        private string? messageInput;
+
+        protected override async Task OnInitializedAsync()
+        {
+            hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"), options =>
+            {
+                options.UseDefaultCredentials = true;
+            })
+            .Build();
+
+            userInput = await GetUserName();
+
+            hubConnection.On<string, string, string>("ReceiveMessage", async (message, user, toReceiver) =>
+            {
+
+
+                if(userInput == toReceiver || userInput == user)
+                {
+                    
+                    var encodedMsg = $"{user}: {message}";
+                    messages.Add(encodedMsg);
+                    InvokeAsync(StateHasChanged);
+                }
+
+            });
+
+            await hubConnection.StartAsync();
+        }
+
+        private async Task Send()
+        {
+            if (hubConnection is not null)
+            {
+                try
+                {
+                    ApplicationUser? usr = await UserManager.FindByNameAsync(receiver);
+                    string usrname = usr.UserName;
+                    Console.WriteLine("usrname - " + usrname);
+                    if(receiver == usrname)
+                        await hubConnection.SendAsync("SendMessage", messageInput, receiver, userInput);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+ 
+            }
+        }
+
+        public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+        public async ValueTask DisposeAsync()
+        {
+            if (hubConnection is not null)
+            {
+                await hubConnection.DisposeAsync();
+            }
+        }
+
+        public async Task<string> GetUserName()
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            return user.Identity.Name;
+        }
+        }
+    </Authorized>
+    <NotAuthorized>
+
+    </NotAuthorized>
+</AuthorizeView>
